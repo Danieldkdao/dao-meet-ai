@@ -4,6 +4,15 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 export const auth = betterAuth({
+  user: {
+    additionalFields: {
+      isAllowed: {
+        type: "boolean",
+        input: false,
+        defaultValue: false,
+      }
+    }
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
