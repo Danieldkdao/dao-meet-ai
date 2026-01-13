@@ -76,7 +76,7 @@ export const SignInForm = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-b-md md:rounded-l-md md:rounded-br-none border-l-2 border-y-2 shadow-sm bg-card pt-6 pb-10 px-8">
+    <div className="flex flex-col items-center gap-4 rounded-lg md:rounded-r-none border-l-2 border-y-2 shadow-sm bg-card pt-6 pb-10 px-8">
       <div>
         <h1 className="text-4xl font-bold text-center">Welcome back</h1>
         <p className="text-xl text-muted-foreground text-center">
