@@ -18,6 +18,7 @@ import { FaGithub, FaGoogle } from "react-icons/fa6";
 import Link from "next/link";
 import { authClient } from "@/lib/auth/auth-client";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const signUpSchema = z
   .object({
@@ -43,6 +44,7 @@ const signUpSchema = z
 type SignUpSchemaType = z.infer<typeof signUpSchema>;
 
 export const SignUpForm = () => {
+  const [isSocialSignUpLoading, setIsSocialSignUpLoading] = useState(false);
   const form = useForm<SignUpSchemaType>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -52,6 +54,8 @@ export const SignUpForm = () => {
       confirmPassword: "",
     },
   });
+
+  const isLoading = form.formState.isSubmitting || isSocialSignUpLoading;
 
   const handleSignUp = async (formData: SignUpSchemaType) => {
     await authClient.signUp.email(
@@ -72,8 +76,19 @@ export const SignUpForm = () => {
     );
   };
 
+  const handleSocialSignUp = async (provider: "github" | "google") => {
+    setIsSocialSignUpLoading(true);
+    const data = await authClient.signIn.social({ provider, callbackURL: "/" });
+    if (data.error) {
+      toast.error(
+        data.error.message ?? `Failed to sign up with provider ${provider}`
+      );
+    }
+    setIsSocialSignUpLoading(false);
+  };
+
   return (
-    <div className="flex flex-col items-center gap-4 rounded-l-md border-l-2 border-y-2 shadow-sm bg-card pt-6 pb-10 px-8">
+    <div className="flex flex-col items-center gap-4 rounded-b-md md:rounded-l-md md:rounded-br-none border-l-2 border-y-2 shadow-sm bg-card pt-6 pb-10 px-8">
       <div>
         <h1 className="text-4xl font-bold text-center">Let's get started</h1>
         <p className="text-xl text-muted-foreground text-center">
@@ -155,13 +170,8 @@ export const SignUpForm = () => {
               </FormItem>
             )}
           />
-          <Button
-            disabled={form.formState.isSubmitting}
-            className="w-full text-base py-5"
-          >
-            <LoadingSwap isLoading={form.formState.isSubmitting}>
-              Sign up
-            </LoadingSwap>
+          <Button disabled={isLoading} className="w-full text-base py-5">
+            <LoadingSwap isLoading={isLoading}>Sign up</LoadingSwap>
           </Button>
         </form>
       </Form>
@@ -174,9 +184,10 @@ export const SignUpForm = () => {
         <Button
           variant="ghost"
           className="text-base font-medium shadow-sm border py-5"
-          disabled={form.formState.isSubmitting}
+          disabled={isLoading}
+          onClick={() => handleSocialSignUp("google")}
         >
-          <LoadingSwap isLoading={form.formState.isSubmitting}>
+          <LoadingSwap isLoading={isLoading}>
             <div className="flex items-center gap-2">
               <FaGoogle />
               Google
@@ -186,9 +197,10 @@ export const SignUpForm = () => {
         <Button
           variant="ghost"
           className="text-base font-medium shadow-sm border py-5"
-          disabled={form.formState.isSubmitting}
+          disabled={isLoading}
+          onClick={() => handleSocialSignUp("github")}
         >
-          <LoadingSwap isLoading={form.formState.isSubmitting}>
+          <LoadingSwap isLoading={isLoading}>
             <div className="flex items-center gap-2">
               <FaGithub />
               Github

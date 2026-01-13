@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${outfitSans.variable} ${outfitSans.className} antialiased bg-secondary`}
+        className={`${outfitSans.variable} ${outfitSans.className} antialiased`}
       >
         {children}
         <Toaster />
