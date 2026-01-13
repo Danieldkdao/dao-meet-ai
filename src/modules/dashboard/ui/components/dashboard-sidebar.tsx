@@ -42,6 +42,7 @@ const secondSection = [
 
 export const DashboardSidebar = () => {
   const pathname = usePathname();
+
   return (
     <>
       <Sidebar>
