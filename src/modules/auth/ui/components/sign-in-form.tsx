@@ -33,6 +33,7 @@ const signInSchema = z.object({
 type SignInSchemaType = z.infer<typeof signInSchema>;
 
 export const SignInForm = () => {
+  const [isSocialSignInLoading, setIsSocialSignInLoading] = useState(false);
   const [error, setError] = useState(false);
   const form = useForm<SignInSchemaType>({
     resolver: zodResolver(signInSchema),
@@ -41,6 +42,8 @@ export const SignInForm = () => {
       password: "",
     },
   });
+
+  const isLoading = form.formState.isSubmitting || isSocialSignInLoading;
 
   const handleSignIn = async (formData: SignInSchemaType) => {
     setError(false);
@@ -51,7 +54,7 @@ export const SignInForm = () => {
       },
       {
         onSuccess: () => {
-          toast.success("Sign in successful!");
+          toast.success("Signed in successfully!");
         },
         onError: (err) => {
           setError(true);
@@ -61,8 +64,19 @@ export const SignInForm = () => {
     );
   };
 
+  const handleSocialSignIn = async (provider: "github" | "google") => {
+    setIsSocialSignInLoading(true);
+    const data = await authClient.signIn.social({ provider, callbackURL: "/" });
+    if (data.error) {
+      toast.error(
+        data.error.message ?? `Failed to sign in with provider ${provider}`
+      );
+    }
+    setIsSocialSignInLoading(false);
+  };
+
   return (
-    <div className="flex flex-col items-center gap-4 rounded-l-md border-l-2 border-y-2 shadow-sm bg-card pt-6 pb-10 px-8">
+    <div className="flex flex-col items-center gap-4 rounded-b-md md:rounded-l-md md:rounded-br-none border-l-2 border-y-2 shadow-sm bg-card pt-6 pb-10 px-8">
       <div>
         <h1 className="text-4xl font-bold text-center">Welcome back</h1>
         <p className="text-xl text-muted-foreground text-center">
@@ -111,17 +125,16 @@ export const SignInForm = () => {
               </FormItem>
             )}
           />
-          <div className={cn("bg-destructive/20 flex items-center gap-2 rounded-md p-4 w-full pointer-events-none transition-opacity", error ? "opacity-100" : "opacity-0")}>
-            <CircleAlertIcon className="text-destructive size-5" />
-            <p>Invalid email or password</p>
-          </div>
-          <Button
-            disabled={form.formState.isSubmitting}
-            className="w-full text-base py-5"
-          >
-            <LoadingSwap isLoading={form.formState.isSubmitting}>
-              Sign in
-            </LoadingSwap>
+          {error && (
+            <div className="bg-destructive/20 flex items-center gap-2 rounded-md px-4 py-2.5 w-full">
+              <CircleAlertIcon className="text-destructive text-xs sm:text-sm md:text-base size-3 sm:size-4 md:size-5" />
+              <p className="text-xs sm:text-sm md:text-base">
+                Invalid email or password
+              </p>
+            </div>
+          )}
+          <Button disabled={isLoading} className="w-full text-base py-5">
+            <LoadingSwap isLoading={isLoading}>Sign in</LoadingSwap>
           </Button>
         </form>
       </Form>
@@ -134,9 +147,10 @@ export const SignInForm = () => {
         <Button
           variant="ghost"
           className="text-base font-medium shadow-sm border py-5"
-          disabled={form.formState.isSubmitting}
+          disabled={isLoading}
+          onClick={() => handleSocialSignIn("google")}
         >
-          <LoadingSwap isLoading={form.formState.isSubmitting}>
+          <LoadingSwap isLoading={isLoading}>
             <div className="flex items-center gap-2">
               <FaGoogle />
               Google
@@ -146,9 +160,10 @@ export const SignInForm = () => {
         <Button
           variant="ghost"
           className="text-base font-medium shadow-sm border py-5"
-          disabled={form.formState.isSubmitting}
+          disabled={isLoading}
+          onClick={() => handleSocialSignIn("github")}
         >
-          <LoadingSwap isLoading={form.formState.isSubmitting}>
+          <LoadingSwap isLoading={isLoading}>
             <div className="flex items-center gap-2">
               <FaGithub />
               Github
