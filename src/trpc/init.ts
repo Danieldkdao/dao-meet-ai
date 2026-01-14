@@ -1,11 +1,12 @@
 import { envServer } from "@/data/env/server";
 import { auth } from "@/lib/auth/auth";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { headers } from "next/headers";
 import { cache } from "react";
 import superjson from "superjson";
 
 export const createTRPCContext = cache(async () => {
-  return { auth: await auth.api.getSession() };
+  return { auth: await auth.api.getSession({ headers: await headers() }) };
 });
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
@@ -21,7 +22,7 @@ const isAuthed = t.middleware(({ next, ctx }) => {
     });
   }
 
-  if(!ctx.auth.user.isAllowed) {
+  if (!ctx.auth.user.isAllowed) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Feature disabled",

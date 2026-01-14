@@ -1,9 +1,11 @@
-import React from 'react'
+import { AgentView } from "@/modules/agents/ui/views/agent-view";
+import { getQueryClient, trpc } from "@/trpc/server";
 
 const AgentsPage = () => {
-  return (
-    <div>AgentsPage</div>
-  )
-}
+  const queryClient = getQueryClient();
+  void queryClient.prefetchQuery(trpc.agents.getMany.queryOptions({}));
 
-export default AgentsPage
+  return <AgentView />;
+};
+
+export default AgentsPage;
