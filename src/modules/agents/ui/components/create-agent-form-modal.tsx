@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -27,8 +27,8 @@ const createAgentFormSchema = z.object({
     .string({ error: "Invalid name" })
     .trim()
     .min(1, { error: "Name must be at least 1 character" }),
-  description: z
-    .string({ error: "Invalid description" })
+  instructions: z
+    .string({ error: "Invalid instructions" })
     .trim()
     .min(1, { error: "Description must be at least 1 character" }),
 });
@@ -43,7 +43,7 @@ export const CreateAgentFormModal = () => {
     resolver: zodResolver(createAgentFormSchema),
     defaultValues: {
       name: "",
-      description: "",
+      instructions: "",
     },
   });
   const name = form.watch("name");
@@ -106,11 +106,11 @@ export const CreateAgentFormModal = () => {
               )}
             />
             <FormField
-              name="description"
+              name="instructions"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Instructions</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}

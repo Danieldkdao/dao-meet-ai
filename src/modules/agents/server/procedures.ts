@@ -8,7 +8,7 @@ import { db } from "@/drizzle/db";
 import { AgentTable, user } from "@/drizzle/schema";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, ilike } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
 import z from "zod";
 
 export const agentsRouter = createTRPCRouter({
@@ -16,12 +16,12 @@ export const agentsRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1),
-        description: z.string().min(1),
+        instructions: z.string().min(1),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { id: userId } = ctx.auth.user;
-      const { name, description, avatarUrl } = input;
+      const { name, instructions } = input;
 
       const [existingUser] = await db
         .select()
@@ -38,7 +38,7 @@ export const agentsRouter = createTRPCRouter({
         .insert(AgentTable)
         .values({
           name,
-          description,
+          instructions,
           creatorId: userId,
         })
         .returning();
@@ -73,7 +73,11 @@ export const agentsRouter = createTRPCRouter({
       }
 
       const agents = await db
-        .select()
+        .select({
+          ...getTableColumns(AgentTable),
+          meetingCount: sql<number>`5`,
+          // add number of meetings per
+        })
         .from(AgentTable)
         .where(
           and(
@@ -85,9 +89,9 @@ export const agentsRouter = createTRPCRouter({
         .offset(offset)
         .orderBy(desc(AgentTable.updatedAt), desc(AgentTable.id));
 
-      const hasNextPage = agents.length < pageSize;
-      const hasPreviousPage = page === 1;
-      const totalPages = Math.floor(agents.length / pageSize);
+      const hasNextPage = agents.length === pageSize;
+      const hasPreviousPage = page > 1;
+      const totalPages = Math.floor(agents.length / pageSize) || 1;
 
       return {
         agents,
