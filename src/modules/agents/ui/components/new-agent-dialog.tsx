@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { useTRPC } from "@/trpc/client";
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,7 @@ import { PlusIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-const createAgentFormSchema = z.object({
+const newAgentDialogSchema = z.object({
   name: z
     .string({ error: "Invalid name" })
     .trim()
@@ -33,14 +33,19 @@ const createAgentFormSchema = z.object({
     .min(1, { error: "Description must be at least 1 character" }),
 });
 
-type FormData = z.infer<typeof createAgentFormSchema>;
+type FormData = z.infer<typeof newAgentDialogSchema>;
 
-export const CreateAgentFormModal = () => {
+type NewAgentDialogProps = {
+  open: boolean;
+  openChange: Dispatch<SetStateAction<boolean>>;
+};
+
+export const NewAgentDialog = ({ open, openChange }: NewAgentDialogProps) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const [isCreateAgentModalOpen, setIsCreateAgentModalOpen] = useState(false);
+
   const form = useForm<FormData>({
-    resolver: zodResolver(createAgentFormSchema),
+    resolver: zodResolver(newAgentDialogSchema),
     defaultValues: {
       name: "",
       instructions: "",
@@ -53,11 +58,11 @@ export const CreateAgentFormModal = () => {
         queryClient.invalidateQueries(trpc.agents.getMany.queryOptions({}));
         // todo: invalidate some other stuff
         toast.success("Agent created successfully!");
-        setIsCreateAgentModalOpen(false);
+        openChange(false);
       },
       onError: (err) => {
         toast.error(err.message);
-        setIsCreateAgentModalOpen(false);
+        openChange(false);
       },
     })
   );
@@ -68,15 +73,15 @@ export const CreateAgentFormModal = () => {
 
   return (
     <>
-      <Button onClick={() => setIsCreateAgentModalOpen(true)}>
+      <Button onClick={() => openChange(true)}>
         <PlusIcon />
         New Agent
       </Button>
       <ResponsiveDialog
         title="New Agent"
         description="Create a new agent"
-        open={isCreateAgentModalOpen}
-        onOpenChange={setIsCreateAgentModalOpen}
+        open={open}
+        onOpenChange={openChange}
       >
         <GeneratedAvatar
           seed={name}
@@ -127,7 +132,7 @@ export const CreateAgentFormModal = () => {
                 variant="ghost"
                 type="button"
                 disabled={create.isPending}
-                onClick={() => setIsCreateAgentModalOpen(false)}
+                onClick={() => openChange(false)}
               >
                 Cancel
               </Button>
