@@ -8,22 +8,18 @@ import { ErrorBoundary } from "react-error-boundary";
 import { Suspense } from "react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { AgentHeader } from "@/modules/agents/ui/components/agent-header";
-
-type AgentsPageProps = Promise<{
-  query?: string;
-  page?: string;
-}>;
+import type { SearchParams } from "nuqs";
+import { loadSearchParams } from "@/modules/agents/params";
 
 const AgentsPage = async ({
   searchParams,
 }: {
-  searchParams: AgentsPageProps;
+  searchParams: Promise<SearchParams>;
 }) => {
-  const { query, page } = await searchParams;
-  const parsedPage = Number(page) || 1;
+  const filters = await loadSearchParams(searchParams);
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(
-    trpc.agents.getMany.queryOptions({ search: query, page: parsedPage })
+    trpc.agents.getMany.queryOptions({ ...filters })
   );
 
   return (
@@ -32,7 +28,7 @@ const AgentsPage = async ({
         <AgentHeader />
         <Suspense fallback={<AgentViewLoading />}>
           <ErrorBoundary fallback={<AgentViewError />}>
-            <AgentView query={query} page={parsedPage} />
+            <AgentView />
           </ErrorBoundary>
         </Suspense>
       </div>

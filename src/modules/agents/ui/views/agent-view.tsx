@@ -7,26 +7,47 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { ErrorState } from "@/components/error-state";
 import { EmptyState } from "@/components/empty-state";
+import { DataPagination } from "../components/data-pagination";
+import { useAgentsFilters } from "../../hooks/use-agents-filters";
 
-type AgentViewProps = {
-  query: string | undefined;
-  page: number;
-};
-
-export const AgentView = ({ query, page }: AgentViewProps) => {
+export const AgentView = () => {
   const trpc = useTRPC();
-  const { data: agents } = useSuspenseQuery(
-    trpc.agents.getMany.queryOptions({ search: query, page })
+  const [filters, setFilters] = useAgentsFilters();
+  const {
+    data: { agents, metadata },
+  } = useSuspenseQuery(
+    trpc.agents.getMany.queryOptions({
+      search: filters.search,
+      page: filters.page,
+    })
   );
+
+  const handlePagination = (direction: "prev" | "next") => {
+    if (direction === "next" && metadata.hasNextPage) {
+      setFilters({ page: filters.page + 1 });
+      return;
+    }
+    if (direction === "prev" && metadata.hasPreviousPage) {
+      setFilters({ page: filters.page - 1 });
+    }
+  };
+
   return (
     <div className="flex-1 pb-4 flex flex-col gap-y-4">
-      <DataTable data={agents.agents} columns={columns} />
-      {agents.agents.length === 0 && (
+      <DataTable data={agents} columns={columns} />
+      {agents.length === 0 && (
         <EmptyState
           title="Create your first agent"
           description="Create an agent to join your meetings. Each agent will follow your instructions and can interact with participants during the call."
         />
       )}
+      <DataPagination
+        currentPage={filters.page}
+        totalPages={metadata.totalPages}
+        hasNextPage={metadata.hasNextPage}
+        hasPreviousPage={metadata.hasPreviousPage}
+        handlePagination={handlePagination}
+      />
     </div>
   );
 };
