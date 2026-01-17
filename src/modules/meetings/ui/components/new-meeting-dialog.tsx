@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { CommandSelect } from "@/components/command-select";
 import { NewAgentDialog } from "@/modules/agents/ui/components/new-agent-dialog";
 import { useRouter } from "next/navigation";
+import { useMeetingsFilters } from "../../hooks/use-meetings-filters";
 
 const newMeetingDialogSchema = z.object({
   title: z
@@ -47,6 +48,7 @@ export const NewMeetingDialog = ({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [filters] = useMeetingsFilters();
 
   const [agentCreateOpen, setAgentCreateOpen] = useState(false);
   const [agentSearch, setAgentSearch] = useState("");
@@ -69,7 +71,14 @@ export const NewMeetingDialog = ({
   const create = useMutation(
     trpc.meetings.create.mutationOptions({
       onSuccess: (data) => {
-        queryClient.invalidateQueries(trpc.meetings.getMany.queryOptions({}));
+        queryClient.invalidateQueries(
+          trpc.meetings.getMany.queryOptions({
+            page: filters.page,
+            search: filters.search,
+            status: filters.status,
+            agentId: filters.agentId,
+          }),
+        );
         // todo: invalidate some other stuff
         toast.success("Meeting created successfully!");
         openChange(false);

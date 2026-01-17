@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { NewMeetingDialog } from "./new-meeting-dialog";
 import { useState } from "react";
+import { MeetingsFilters } from "./meetings-filters";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export const MeetingsHeader = () => {
   const [open, setOpen] = useState(false);
-  // todo: add filters, create meeting functionality
+
   return (
     <>
       <NewMeetingDialog open={open} openChange={setOpen} />
@@ -19,6 +21,10 @@ export const MeetingsHeader = () => {
             New Meeting
           </Button>
         </div>
+        <ScrollArea>
+          <MeetingsFilters />
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </>
   );
