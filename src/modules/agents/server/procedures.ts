@@ -5,7 +5,7 @@ import {
   PAGE_SIZE,
 } from "@/constants";
 import { db } from "@/drizzle/db";
-import { AgentTable, user } from "@/drizzle/schema";
+import { AgentTable, MeetingTable, user } from "@/drizzle/schema";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
@@ -75,8 +75,10 @@ export const agentsRouter = createTRPCRouter({
       const agents = await db
         .select({
           ...getTableColumns(AgentTable),
-          meetingCount: sql<number>`5`,
-          // add number of meetings per
+          meetingCount: db.$count(
+            MeetingTable,
+            eq(MeetingTable.agentId, AgentTable.id),
+          ),
         })
         .from(AgentTable)
         .where(
@@ -101,7 +103,7 @@ export const agentsRouter = createTRPCRouter({
           ),
         );
 
-      const hasNextPage = (page * pageSize) < total.count;
+      const hasNextPage = page * pageSize < total.count;
       const hasPreviousPage = page > 1;
       const totalPages = Math.floor(total.count / pageSize) || 1;
 
@@ -127,7 +129,10 @@ export const agentsRouter = createTRPCRouter({
       const [existingAgent] = await db
         .select({
           ...getTableColumns(AgentTable),
-          meetingCount: sql<number>`5`,
+          meetingCount: db.$count(
+            MeetingTable,
+            eq(AgentTable.id, MeetingTable.agentId),
+          ),
         })
         .from(AgentTable)
         .where(and(eq(AgentTable.id, id), eq(AgentTable.creatorId, userId)));

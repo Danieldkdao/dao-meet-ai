@@ -94,7 +94,7 @@ export const AgentUpdateDialog = ({
   return (
     <ResponsiveDialog
       title="Update Agent"
-      description="Update agent details"
+      description="Edit agent details"
       open={open}
       onOpenChange={openChange}
     >
