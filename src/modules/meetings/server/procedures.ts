@@ -1,4 +1,9 @@
-import { DEFAULT_PAGE, MAX_PAGE_SIZE, MIN_PAGE_SIZE, PAGE_SIZE } from "@/constants";
+import {
+  DEFAULT_PAGE,
+  MAX_PAGE_SIZE,
+  MIN_PAGE_SIZE,
+  PAGE_SIZE,
+} from "@/constants";
 import { db } from "@/drizzle/db";
 import { MeetingTable, user } from "@/drizzle/schema";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
@@ -71,5 +76,39 @@ export const meetingsRouter = createTRPCRouter({
           totalPages,
         },
       };
+    }),
+  create: protectedProcedure
+    .input(
+      z.object({
+        title: z.string().min(1),
+        agentId: z.uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { title, agentId } = input;
+
+      const [existingUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, userId));
+
+      if (!existingUser) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User not found",
+        });
+      }
+
+      const [createdMeeting] = await db
+        .insert(MeetingTable)
+        .values({
+          title,
+          creatorId: existingUser.id,
+          agentId,
+        })
+        .returning();
+
+      return createdMeeting;
     }),
 });
