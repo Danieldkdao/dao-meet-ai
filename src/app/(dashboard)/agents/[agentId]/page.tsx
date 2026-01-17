@@ -21,13 +21,11 @@ const AgentIdPage = async ({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="w-full h-svh p-5 flex flex-col gap-4">
-        <Suspense fallback={<AgentIdLoading />}>
-          <ErrorBoundary fallback={<AgentIdError />}>
-            <AgentIdView agentId={agentId} />
-          </ErrorBoundary>
-        </Suspense>
-      </div>
+      <Suspense fallback={<AgentIdLoading />}>
+        <ErrorBoundary fallback={<AgentIdError />}>
+          <AgentIdView agentId={agentId} />
+        </ErrorBoundary>
+      </Suspense>
     </HydrationBoundary>
   );
 };

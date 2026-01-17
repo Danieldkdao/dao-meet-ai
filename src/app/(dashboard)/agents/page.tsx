@@ -19,19 +19,17 @@ const AgentsPage = async ({
   const filters = await loadSearchParams(searchParams);
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(
-    trpc.agents.getMany.queryOptions({ ...filters })
+    trpc.agents.getMany.queryOptions({ ...filters }),
   );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="w-full h-svh p-5 flex flex-col gap-4">
-        <AgentHeader />
-        <Suspense fallback={<AgentViewLoading />}>
-          <ErrorBoundary fallback={<AgentViewError />}>
-            <AgentView />
-          </ErrorBoundary>
-        </Suspense>
-      </div>
+      <AgentHeader />
+      <Suspense fallback={<AgentViewLoading />}>
+        <ErrorBoundary fallback={<AgentViewError />}>
+          <AgentView />
+        </ErrorBoundary>
+      </Suspense>
     </HydrationBoundary>
   );
 };
