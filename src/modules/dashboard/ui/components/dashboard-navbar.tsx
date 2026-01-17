@@ -27,7 +27,7 @@ export const DashboardNavbar = () => {
   return (
     <>
       <DashboardCommand open={isCommandOpen} setOpen={setIsCommandOpen} />
-      <nav className="p-4 w-full bg-white flex items-center gap-2">
+      <nav className="p-4 w-full bg-white flex items-center gap-2 shadow-sm">
         <SidebarTrigger variant="outline" className="p-4.25" />
         <Button
           variant="outline"

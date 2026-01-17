@@ -2,7 +2,7 @@
 
 import { LoadingState } from "@/components/loading-state";
 import { columns } from "../components/columns";
-import { DataTable } from "../components/data-table";
+import { DataTable } from "@/components/data-table";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { ErrorState } from "@/components/error-state";
@@ -21,7 +21,7 @@ export const AgentView = () => {
     trpc.agents.getMany.queryOptions({
       search: filters.search,
       page: filters.page,
-    })
+    }),
   );
 
   const handlePagination = (direction: "prev" | "next") => {
@@ -41,12 +41,6 @@ export const AgentView = () => {
         columns={columns}
         onRowClick={(row) => router.push(`/agents/${row.id}`)}
       />
-      {agents.length === 0 && (
-        <EmptyState
-          title="Create your first agent"
-          description="Create an agent to join your meetings. Each agent will follow your instructions and can interact with participants during the call."
-        />
-      )}
       <DataPagination
         currentPage={filters.page}
         totalPages={metadata.totalPages}
@@ -54,6 +48,12 @@ export const AgentView = () => {
         hasPreviousPage={metadata.hasPreviousPage}
         handlePagination={handlePagination}
       />
+      {agents.length === 0 && (
+        <EmptyState
+          title="Create your first agent"
+          description="Create an agent to join your meetings. Each agent will follow your instructions and can interact with participants during the call."
+        />
+      )}
     </div>
   );
 };

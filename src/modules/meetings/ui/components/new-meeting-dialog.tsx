@@ -20,6 +20,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CommandSelect } from "@/components/command-select";
 import { NewAgentDialog } from "@/modules/agents/ui/components/new-agent-dialog";
+import { useRouter } from "next/navigation";
 
 const newMeetingDialogSchema = z.object({
   title: z
@@ -45,6 +46,7 @@ export const NewMeetingDialog = ({
 }: NewMeetingDialogProps) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const [agentCreateOpen, setAgentCreateOpen] = useState(false);
   const [agentSearch, setAgentSearch] = useState("");
@@ -66,11 +68,12 @@ export const NewMeetingDialog = ({
 
   const create = useMutation(
     trpc.meetings.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries(trpc.meetings.getMany.queryOptions({}));
         // todo: invalidate some other stuff
         toast.success("Meeting created successfully!");
         openChange(false);
+        router.push(`/meetings/${data.id}`);
       },
       onError: (err) => {
         toast.error(err.message);
@@ -84,10 +87,7 @@ export const NewMeetingDialog = ({
 
   return (
     <>
-      <NewAgentDialog
-        open={agentCreateOpen}
-        openChange={setAgentCreateOpen}
-      />
+      <NewAgentDialog open={agentCreateOpen} openChange={setAgentCreateOpen} />
       <ResponsiveDialog
         title="New Meeting"
         description="Create a new meeting"
