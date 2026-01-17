@@ -77,10 +77,10 @@ export const meetingsRouter = createTRPCRouter({
             status ? eq(MeetingTable.status, status) : undefined,
             agentId ? eq(MeetingTable.agentId, agentId) : undefined,
             search ? ilike(MeetingTable.title, `%${search}%`) : undefined,
-          ),  
+          ),
         );
 
-      const hasNextPage = (page * pageSize) < total.count;
+      const hasNextPage = page * pageSize < total.count;
       const hasPreviousPage = page > 1;
       const totalPages = Math.floor(total.count / pageSize) || 1;
 
@@ -92,6 +92,48 @@ export const meetingsRouter = createTRPCRouter({
           totalPages,
         },
       };
+    }),
+  getOne: protectedProcedure
+    .input(z.object({ id: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { id } = input;
+
+      const [existingUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, userId));
+
+      if (!existingUser) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        });
+      }
+
+      const [existingMeeting] = await db
+        .select({
+          ...getTableColumns(MeetingTable),
+          agent: AgentTable,
+          duration:
+            sql<number>`EXTRACT(EPOCH FROM (${MeetingTable.endedAt} - ${MeetingTable.startedAt}))`.as(
+              "duration",
+            ),
+        })
+        .from(MeetingTable)
+        .innerJoin(AgentTable, eq(MeetingTable.agentId, AgentTable.id))
+        .where(
+          and(eq(MeetingTable.id, id), eq(MeetingTable.creatorId, userId)),
+        );
+
+      if (!existingMeeting) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Meeting not found",
+        });
+      }
+
+      return existingMeeting;
     }),
   create: protectedProcedure
     .input(
@@ -126,5 +168,63 @@ export const meetingsRouter = createTRPCRouter({
         .returning();
 
       return createdMeeting;
+    }),
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.uuid(),
+        title: z.string().min(1),
+        agentId: z.uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { id, title, agentId } = input;
+
+      const [existingUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, userId));
+
+      if (!existingUser) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
+      }
+
+      const [updatedMeeting] = await db
+        .update(MeetingTable)
+        .set({
+          title,
+          agentId,
+        })
+        .where(and(eq(MeetingTable.id, id), eq(MeetingTable.creatorId, userId)))
+        .returning();
+
+      return updatedMeeting;
+    }),
+  remove: protectedProcedure
+    .input(
+      z.object({
+        id: z.uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { id } = input;
+
+      const [existingUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, userId));
+
+      if (!existingUser) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
+      }
+
+      const [deletedMeeting] = await db
+        .delete(MeetingTable)
+        .where(and(eq(MeetingTable.id, id), eq(MeetingTable.creatorId, userId)))
+        .returning();
+
+      return deletedMeeting;
     }),
 });

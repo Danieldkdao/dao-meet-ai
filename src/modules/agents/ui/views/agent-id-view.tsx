@@ -18,7 +18,7 @@ export const AgentIdView = ({ agentId }: { agentId: string }) => {
   return (
     <div className="flex flex-col gap-y-4">
       <AgentIdHeader agent={agent} />
-      <div className="bg-background rounded-md w-full p-4 flex flex-col gap-y-4">
+      <div className="bg-background shadow-sm rounded-md w-full p-4 flex flex-col gap-y-4">
         <div className="flex items-center gap-x-2">
           <GeneratedAvatar
             seed={agent.name}

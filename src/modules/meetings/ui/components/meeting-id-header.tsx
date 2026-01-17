@@ -16,40 +16,46 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditIcon, MoreVerticalIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
-import type { AgentsGetOneOutput } from "../../types";
+import type { MeetingGetOneOutput } from "../../types";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAgentsFilters } from "../../hooks/use-agents-filters";
+import { useMeetingsFilters } from "../../hooks/use-meetings-filters";
 import { toast } from "sonner";
 import { useState } from "react";
-import { AgentUpdateDialog } from "./agent-update-dialog";
 import { useRouter } from "next/navigation";
+import { MeetingUpdateDialog } from "./meeting-update-dialog";
 import { useConfirm } from "@/hooks/use-confirm";
 
-export const AgentIdHeader = ({ agent }: { agent: AgentsGetOneOutput }) => {
+export const MeetingIdHeader = ({
+  meeting,
+}: {
+  meeting: MeetingGetOneOutput;
+}) => {
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [filters] = useAgentsFilters();
+  const [filters] = useMeetingsFilters();
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
   const remove = useMutation(
-    trpc.agents.remove.mutationOptions({
+    trpc.meetings.remove.mutationOptions({
       // todo: invalidate more stuff
       onSuccess: () => {
         queryClient.invalidateQueries(
-          trpc.agents.getMany.queryOptions({
+          trpc.meetings.getMany.queryOptions({
             page: filters.page,
             search: filters.search,
+            status: filters.status,
+            agentId: filters.agentId,
           }),
         );
         queryClient.invalidateQueries(
-          trpc.agents.getOne.queryOptions({
-            id: agent.id,
+          trpc.meetings.getOne.queryOptions({
+            id: meeting.id,
           }),
         );
-        toast.success("Agent deleted successfully!");
-        router.push("/agents");
+        toast.success("Meeting deleted successfully!");
+        router.push("/meetings");
       },
       onError: () => {
         toast.error("Something went wrong");
@@ -59,22 +65,22 @@ export const AgentIdHeader = ({ agent }: { agent: AgentsGetOneOutput }) => {
 
   const [RemoveConfirmation, confirmRemove] = useConfirm(
     "Are you sure?",
-    `The following action will remove ${agent.meetingCount} ${agent.meetingCount === 1 ? "meeting" : "meetings"} associated with this agent.`,
+    `Are you sure you want to delete this meeting? This will remove all info related to this meeting and cannot be undone.`,
   );
 
-  const handleRemoveAgent = async () => {
+  const handleRemoveMeeting = async () => {
     const ok = await confirmRemove();
 
     if (!ok) return;
 
-    await remove.mutateAsync({ id: agent.id });
+    await remove.mutateAsync({ id: meeting.id });
   };
 
   return (
     <>
       <RemoveConfirmation />
-      <AgentUpdateDialog
-        agent={agent}
+      <MeetingUpdateDialog
+        meeting={meeting}
         open={isUpdateDialogOpen}
         openChange={setIsUpdateDialogOpen}
       />
@@ -83,15 +89,15 @@ export const AgentIdHeader = ({ agent }: { agent: AgentsGetOneOutput }) => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/agents" className="text-lg">
-                  My Agents
+                <Link href="/meetings" className="text-lg">
+                  My Meetings
                 </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator className="text-black" />
             <BreadcrumbItem>
               <BreadcrumbPage className="text-lg font-medium">
-                {agent.name}
+                {meeting.title}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
@@ -108,7 +114,9 @@ export const AgentIdHeader = ({ agent }: { agent: AgentsGetOneOutput }) => {
                 <EditIcon className="text-black" />
                 <span>Edit</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleRemoveAgent}>
+              <DropdownMenuItem
+                onClick={handleRemoveMeeting}
+              >
                 <TrashIcon className="text-black" />
                 <span>Delete</span>
               </DropdownMenuItem>

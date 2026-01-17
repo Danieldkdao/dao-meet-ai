@@ -22,8 +22,9 @@ import { CommandSelect } from "@/components/command-select";
 import { NewAgentDialog } from "@/modules/agents/ui/components/new-agent-dialog";
 import { useRouter } from "next/navigation";
 import { useMeetingsFilters } from "../../hooks/use-meetings-filters";
+import type { MeetingGetOneOutput } from "../../types";
 
-const newMeetingDialogSchema = z.object({
+const meetingUpdateDialogSchema = z.object({
   title: z
     .string({ error: "Invalid title" })
     .trim()
@@ -34,17 +35,19 @@ const newMeetingDialogSchema = z.object({
     .min(1, { error: "Please select an agent" }),
 });
 
-type FormData = z.infer<typeof newMeetingDialogSchema>;
+type FormData = z.infer<typeof meetingUpdateDialogSchema>;
 
-type NewMeetingDialogProps = {
+type MeetingUpdateDialogProps = {
+  meeting: MeetingGetOneOutput;
   open: boolean;
   openChange: Dispatch<SetStateAction<boolean>>;
 };
 
-export const NewMeetingDialog = ({
+export const MeetingUpdateDialog = ({
+  meeting,
   open,
   openChange,
-}: NewMeetingDialogProps) => {
+}: MeetingUpdateDialogProps) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -61,15 +64,15 @@ export const NewMeetingDialog = ({
   );
 
   const form = useForm<FormData>({
-    resolver: zodResolver(newMeetingDialogSchema),
+    resolver: zodResolver(meetingUpdateDialogSchema),
     defaultValues: {
-      title: "",
-      agentId: "",
+      title: meeting.title,
+      agentId: meeting.agentId,
     },
   });
 
-  const create = useMutation(
-    trpc.meetings.create.mutationOptions({
+  const update = useMutation(
+    trpc.meetings.update.mutationOptions({
       onSuccess: (data) => {
         queryClient.invalidateQueries(
           trpc.meetings.getMany.queryOptions({
@@ -80,7 +83,7 @@ export const NewMeetingDialog = ({
           }),
         );
         // todo: invalidate some other stuff
-        toast.success("Meeting created successfully!");
+        toast.success("Meeting updated successfully!");
         openChange(false);
         router.push(`/meetings/${data.id}`);
       },
@@ -91,15 +94,21 @@ export const NewMeetingDialog = ({
   );
 
   const handleSubmit = (data: FormData) => {
-    create.mutate({ ...data });
+    if (
+      data.title.trim() === meeting.title &&
+      data.agentId === meeting.agentId
+    ) {
+      return toast.error("No changes made");
+    }
+    update.mutate({ id: meeting.id, ...data });
   };
 
   return (
     <>
       <NewAgentDialog open={agentCreateOpen} openChange={setAgentCreateOpen} />
       <ResponsiveDialog
-        title="New Meeting"
-        description="Create a new meeting"
+        title="Update Meeting"
+        description="Edit meeting details"
         open={open}
         onOpenChange={openChange}
       >
@@ -170,12 +179,12 @@ export const NewMeetingDialog = ({
               <Button
                 variant="ghost"
                 type="button"
-                disabled={create.isPending}
+                disabled={update.isPending}
                 onClick={() => openChange(false)}
               >
                 Cancel
               </Button>
-              <Button disabled={create.isPending}>Create</Button>
+              <Button disabled={update.isPending}>Update</Button>
             </div>
           </form>
         </Form>
