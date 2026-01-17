@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -61,7 +60,7 @@ export const NewAgentDialog = ({ open, openChange }: NewAgentDialogProps) => {
       onError: (err) => {
         toast.error(err.message);
       },
-    })
+    }),
   );
 
   const handleSubmit = (data: FormData) => {
@@ -69,75 +68,69 @@ export const NewAgentDialog = ({ open, openChange }: NewAgentDialogProps) => {
   };
 
   return (
-    <>
-      <Button onClick={() => openChange(true)}>
-        <PlusIcon />
-        New Agent
-      </Button>
-      <ResponsiveDialog
-        title="New Agent"
-        description="Create a new agent"
-        open={open}
-        onOpenChange={openChange}
-      >
-        <GeneratedAvatar
-          seed={name}
-          className="size-16"
-          variant="botttsNeutral"
-        />
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="flex flex-col gap-4"
-          >
-            <FormField
-              name="name"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter agent name"
-                      className="text-sm"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="instructions"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instructions</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="You are a helpful assistant that can answer questions and help with tasks."
-                      className="max-h-32 resize-none"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="w-full flex items-center justify-between">
-              <Button
-                variant="ghost"
-                type="button"
-                disabled={create.isPending}
-                onClick={() => openChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button disabled={create.isPending}>Create</Button>
-            </div>
-          </form>
-        </Form>
-      </ResponsiveDialog>
-    </>
+    <ResponsiveDialog
+      title="New Agent"
+      description="Create a new agent"
+      open={open}
+      onOpenChange={openChange}
+    >
+      <GeneratedAvatar
+        seed={name}
+        className="size-16"
+        variant="botttsNeutral"
+      />
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex flex-col gap-4"
+        >
+          <FormField
+            name="name"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Enter agent name"
+                    className="text-sm"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="instructions"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Instructions</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="You are a helpful assistant that can answer questions and help with tasks."
+                    className="max-h-32 resize-none"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="w-full flex items-center justify-between">
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={create.isPending}
+              onClick={() => openChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button disabled={create.isPending}>Create</Button>
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialog>
   );
 };
