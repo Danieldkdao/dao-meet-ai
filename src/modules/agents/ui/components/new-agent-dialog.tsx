@@ -1,9 +1,7 @@
-"use client";
-
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { useTRPC } from "@/trpc/client";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { type Dispatch, type SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,7 +60,6 @@ export const NewAgentDialog = ({ open, openChange }: NewAgentDialogProps) => {
       },
       onError: (err) => {
         toast.error(err.message);
-        openChange(false);
       },
     })
   );
