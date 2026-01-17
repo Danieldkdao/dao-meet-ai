@@ -17,7 +17,7 @@ export const agentsRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1),
         instructions: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { id: userId } = ctx.auth.user;
@@ -55,7 +55,7 @@ export const agentsRouter = createTRPCRouter({
           .max(MAX_PAGE_SIZE)
           .default(PAGE_SIZE),
         search: z.string().nullish(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const { id: userId } = ctx.auth.user;
@@ -82,8 +82,8 @@ export const agentsRouter = createTRPCRouter({
         .where(
           and(
             eq(AgentTable.creatorId, existingUser.id),
-            search ? ilike(AgentTable.name, `%${search}%`) : undefined
-          )
+            search ? ilike(AgentTable.name, `%${search}%`) : undefined,
+          ),
         )
         .limit(pageSize)
         .offset(offset)
@@ -97,8 +97,8 @@ export const agentsRouter = createTRPCRouter({
         .where(
           and(
             eq(AgentTable.creatorId, existingUser.id),
-            search ? ilike(AgentTable.name, `%${search}%`) : undefined
-          )
+            search ? ilike(AgentTable.name, `%${search}%`) : undefined,
+          ),
         );
 
       const hasNextPage = agents.length === pageSize;
@@ -113,5 +113,82 @@ export const agentsRouter = createTRPCRouter({
           totalPages,
         },
       };
+    }),
+  getOne: protectedProcedure
+    .input(
+      z.object({
+        id: z.uuid(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { id } = input;
+
+      const [existingAgent] = await db
+        .select({
+          ...getTableColumns(AgentTable),
+          meetingCount: sql<number>`5`,
+        })
+        .from(AgentTable)
+        .where(and(eq(AgentTable.id, id), eq(AgentTable.creatorId, userId)));
+
+      if (!existingAgent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+      }
+
+      return existingAgent;
+    }),
+  edit: protectedProcedure
+    .input(
+      z.object({
+        id: z.uuid(),
+        name: z.string().min(1),
+        instructions: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { id, name, instructions } = input;
+
+      const [existingAgent] = await db
+        .select()
+        .from(AgentTable)
+        .where(and(eq(AgentTable.id, id), eq(AgentTable.creatorId, userId)));
+
+      if (!existingAgent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+      }
+
+      const [updatedAgent] = await db
+        .update(AgentTable)
+        .set({
+          name,
+          instructions,
+        })
+        .where(and(eq(AgentTable.id, id), eq(AgentTable.creatorId, userId)))
+        .returning();
+
+      return updatedAgent;
+    }),
+  remove: protectedProcedure
+    .input(z.object({ id: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.auth.user;
+      const { id } = input;
+      const [existingAgent] = await db
+        .select()
+        .from(AgentTable)
+        .where(and(eq(AgentTable.id, id), eq(AgentTable.creatorId, userId)));
+
+      if (!existingAgent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found " });
+      }
+
+      const [deletedAgent] = await db
+        .delete(AgentTable)
+        .where(and(eq(AgentTable.id, id), eq(AgentTable.creatorId, userId)))
+        .returning();
+
+      return deletedAgent;
     }),
 });

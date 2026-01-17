@@ -9,9 +9,11 @@ import { ErrorState } from "@/components/error-state";
 import { EmptyState } from "@/components/empty-state";
 import { DataPagination } from "../components/data-pagination";
 import { useAgentsFilters } from "../../hooks/use-agents-filters";
+import { useRouter } from "next/navigation";
 
 export const AgentView = () => {
   const trpc = useTRPC();
+  const router = useRouter();
   const [filters, setFilters] = useAgentsFilters();
   const {
     data: { agents, metadata },
@@ -34,7 +36,11 @@ export const AgentView = () => {
 
   return (
     <div className="flex-1 pb-4 flex flex-col gap-y-4">
-      <DataTable data={agents} columns={columns} />
+      <DataTable
+        data={agents}
+        columns={columns}
+        onRowClick={(row) => router.push(`/agents/${row.id}`)}
+      />
       {agents.length === 0 && (
         <EmptyState
           title="Create your first agent"
