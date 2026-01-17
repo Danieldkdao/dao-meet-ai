@@ -10,6 +10,7 @@ import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
 import z from "zod";
+import { meetingStatuses } from "@/drizzle/schemas/meeting-schema";
 
 export const meetingsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -22,11 +23,13 @@ export const meetingsRouter = createTRPCRouter({
           .max(MAX_PAGE_SIZE)
           .default(PAGE_SIZE),
         search: z.string().nullish(),
+        status: z.enum([...meetingStatuses, ""]).nullish(),
+        agentId: z.string().nullish(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const { id: userId } = ctx.auth.user;
-      const { page, pageSize, search } = input;
+      const { page, pageSize, search, status, agentId } = input;
       const safePage = Math.max(1, page);
       const offset = (safePage - 1) * pageSize;
 
@@ -52,6 +55,8 @@ export const meetingsRouter = createTRPCRouter({
         .where(
           and(
             eq(MeetingTable.creatorId, existingUser.id),
+            status ? eq(MeetingTable.status, status) : undefined,
+            agentId ? eq(MeetingTable.agentId, agentId) : undefined,
             search ? ilike(MeetingTable.title, `%${search}%`) : undefined,
           ),
         )
@@ -69,16 +74,18 @@ export const meetingsRouter = createTRPCRouter({
         .where(
           and(
             eq(MeetingTable.creatorId, existingUser.id),
+            status ? eq(MeetingTable.status, status) : undefined,
+            agentId ? eq(MeetingTable.agentId, agentId) : undefined,
             search ? ilike(MeetingTable.title, `%${search}%`) : undefined,
-          ),
+          ),  
         );
 
-      const hasNextPage = meetings.length === pageSize;
+      const hasNextPage = (page * pageSize) < total.count;
       const hasPreviousPage = page > 1;
       const totalPages = Math.floor(total.count / pageSize) || 1;
 
       return {
-        meetings: [],
+        meetings,
         metadata: {
           hasNextPage,
           hasPreviousPage,

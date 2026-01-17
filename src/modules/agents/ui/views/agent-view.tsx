@@ -7,7 +7,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { ErrorState } from "@/components/error-state";
 import { EmptyState } from "@/components/empty-state";
-import { DataPagination } from "../components/data-pagination";
+import { DataPagination } from "../../../../components/data-pagination";
 import { useAgentsFilters } from "../../hooks/use-agents-filters";
 import { useRouter } from "next/navigation";
 

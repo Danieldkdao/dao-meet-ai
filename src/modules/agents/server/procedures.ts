@@ -101,7 +101,7 @@ export const agentsRouter = createTRPCRouter({
           ),
         );
 
-      const hasNextPage = agents.length === pageSize;
+      const hasNextPage = (page * pageSize) < total.count;
       const hasPreviousPage = page > 1;
       const totalPages = Math.floor(total.count / pageSize) || 1;
 
