@@ -1,6 +1,7 @@
 import { pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { relations } from "drizzle-orm";
+import { MeetingTable } from "./meeting-schema";
 
 export const AgentTable = pgTable("agents", {
   id: uuid().primaryKey().defaultRandom(),
@@ -16,9 +17,10 @@ export const AgentTable = pgTable("agents", {
     .$onUpdate(() => new Date()),
 });
 
-export const agentRelations = relations(AgentTable, ({ one }) => ({
-  user: one(user, {
+export const agentRelations = relations(AgentTable, ({ one, many }) => ({
+  creator: one(user, {
     fields: [AgentTable.creatorId],
     references: [user.id],
   }),
+  meetings: many(MeetingTable),
 }));
